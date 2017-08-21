@@ -1,0 +1,5 @@
+{
+    "all_cates":{
+        "sider":{"tpl":"sider.html","context":"cate_list"}
+    }
+}
