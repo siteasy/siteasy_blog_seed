@@ -13,8 +13,8 @@
     </div>
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
         <ul class="nav navbar-nav navbar-right">
-        {% for k,v in cates.items() %}
-            <li><a href="{{path_prefix}}{{v.url}}">{{v.text}}</a></li>
+        {% for cate_link in cates_link %}
+            <li><a href="{{cate_link.url}}">{{cate_link.text}}</a></li>
         {% endfor %}
         </ul>
     </div>

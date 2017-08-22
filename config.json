@@ -1,11 +1,12 @@
 {
     "articles_path":"articles",
     "theme":"default",
-    "index":"index.md",
+    "index":{"text_0":"Siteasy","text_1":"Simplest site generator","button_0_text":"Quick start"},
     "logo":"Siteasy",
-    "path_prefix":"",
+    "output":"",
     "footer":"Siteasy - Make static site generation life easy",
     "add_date": true,
     "cates":{"News": {}, "Docs":{}, "Themes":{}, "Community":{}, 
-             "github":{"url":"https://siteasy.github.io"}}
+             "github":{"url":"https://siteasy.github.io"}},
+    "plugins":["list"]
 }

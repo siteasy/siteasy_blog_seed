@@ -16,16 +16,15 @@
         {% if has_sider %}
             <div class="row">
               <div class="col-xs-12 col-sm-6 col-md-8">
+        {% endif %}
                 {% block content %}
                 {% endblock %}
+        {% if has_sider %}
               </div>
               <div class="col-xs-6 col-md-4">
                 {% include 'sider.html' %}
               </div>
             </div>
-        {% else %}
-            {% block content %}
-            {% endblock %}
         {% endif %}
     </div>
     {% include 'footer.html' %}

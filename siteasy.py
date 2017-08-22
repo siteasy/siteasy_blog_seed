@@ -5,6 +5,9 @@ import re
 import json
 from http.server import HTTPServer, CGIHTTPRequestHandler 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+from livereload import Server
+
+VERSION = "0.1.0"
 
 env = None
 
@@ -17,19 +20,28 @@ def loadjson(fn):
 def config():
     global env
     c = loadjson('config.json')
+
     env = Environment(
-        loader=FileSystemLoader(os.getcwd() + os.sep + 'theme' + os.sep + c['theme']),
+        loader=FileSystemLoader([os.path.join(os.getcwd(),'theme',c['theme']),os.path.join(os.getcwd(),'plugins')]),
         autoescape=select_autoescape(['html', 'xml'])
     )
     return c
 global_config = config()
 
 def render(tpl,context):
-    t = env.get_template(template) 
-    return t.render(context_dict)
+    t = env.get_template(tpl) 
+    return t.render(context)
+
+def get_md_content(md_path):
+    f = open(md_path)
+    s = f.read()
+    f.close()
+    return s
+
 
 
 def gen_html(template,md,config,output):
+    print('Generate %s from %s with template=%s'%(output,md,template))
     title = md.split('\n')[0].replace('#','').strip()
     context_dict = {
         'title':title,
@@ -39,55 +51,17 @@ def gen_html(template,md,config,output):
     context_dict.update(global_config)
     s = render(template,context_dict)
     #print(context_dict)
-    f = open('output' + os.sep + output,'w')
+    f = open(os.path.join(global_config['output'],output),'w')
     f.write(s)
     f.close()
-    print('Generate %s from %s'%(output,md))
 
-def serve(path):
-    PORT = 8000
-    httpd = HTTPServer(('localhost', PORT), CGIHTTPRequestHandler)
-    if not path:
-        os.chdir('output')
-    print('serving at port', PORT)
-    httpd.serve_forever()
+#def serve(path):
+#    PORT = 8000
+#    httpd = HTTPServer(('localhost', PORT), CGIHTTPRequestHandler)
+#    os.chdir(path)
+#    print('serving %s at port'%(path), PORT)
+#    httpd.serve_forever()
 
-INDEX_CATE = 0
-LIST_CATE = 1
-DIRECT_CATE = 2
-
-def gen_cates():
-    cates = []
-    for cate in global_config['cates'].keys():
-        #the category which contains index.md 
-        if ('index' in global_config['cates'][cate] and global_config['cates'][cate]['index']) or os.path.lexists(os.path.join('articles',cate,'index.md')):
-            os.mkdir('output'+os.sep+cate)
-            global_config['cates'][cate].update({'url':'/'+cate+'/index.html','text':cate})
-            cates.append((cate,INDEX_CATE))
-        #specify the page which have no directory
-        elif not os.path.lexists(os.path.join('articles',cate)):
-            global_config['cates'][cate].update({'url':'/'+global_config['cates'][cate]['url'],'text':global_config['cates'][cate]['text']})
-            cates.append((cate,DIRECT_CATE))
-        #cates which have no index.md 
-        elif os.path.isdir('articles'+os.sep + cate):
-            os.mkdir('output'+os.sep+cate)
-            global_config['cates'][cate].update({'url':'/'+cate+'/list.html','text':cate})
-            cates.append((cate,LIST_CATE))
-    for cate,t in cates:
-        get_site_items(cate)
-        if t == INDEX_CATE:
-            gen_html('index.html',get_md_content(os.path.join('articles',cate,'index.md')),global_config,os.path.join(cate,'index.html'))
-        elif t == DIRECT_CATE:
-            gen_html('detail.html',get_md_content(os.path.join('articles',global_config['cates'][cate]['md'])),global_config,global_config['cates'][cate]['url'])
-        elif t == LIST_CATE:
-            gen_html('list.html','',global_config,os.path.join(cate,'list.html'))
-
-
-def get_md_content(fn):
-    f = open(fn)
-    s = f.read()
-    f.close()
-    return s
 
 def get_articles(cate):
     if os.path.isdir('articles'+os.sep + cate):
@@ -99,42 +73,49 @@ def get_articles(cate):
     else:
         return []
 
-
-def get_site_items(cate):
-    global_config.update({'side_items':[]})
-    fs = get_articles(cate)
-    for fn in fs:
-        fn,ext = os.path.splitext(fn)
-        global_config['side_items'].append({'url':'/'+cate+'/'+fn+'.html','text':fn})
+class NoneObject:
+    def __init__(self):
+        self.text = ""
 
 class BaseView:
-    def __init__(self,cate,tpl="",md_file="",out="",extra_data={}):
-        self.cate = cate
+    def __init__(self,tpl="",md_file="",out="",context={}):
+        self.cateview = NoneObject()
         self.md_file = md_file
         self.tpl = tpl
-        self.extra_data = extra_data
+        self.context = context
         self.out = out
 
-    def gen_html(self,cate_data):
-        if md_file:
-            md_path = os.path.join(global_config['articles_path'],self.cate,self.md_file)
+    def update_extra_context(self,extra_context):
+        self.context.update(extra_context)
+
+    def gen_html(self):
+        print("gen_html cate=%s from md file=%s with tpl=%s and context=%s"%(self.cateview,self.md_file,self.tpl,self.context))
+        if self.md_file:
+            md_path = os.path.join(global_config['articles_path'],self.cateview.text,self.md_file)
             md = get_md_content(md_path)
             if not self.out:
-                self.out = os.path.splitext(md_path)[0] + '.html'
+                self.out = os.path.splitext(self.md_file)[0] + '.html'
         else:
-            md = ''
-        self.extra_data.update(cate_data)
-        gen_html(self.tpl,md,self.extra_data,self.out):
+            md = ""
+        gen_html(self.tpl,md,self.context,os.path.join(self.cateview.text,self.out))
 
 class CateView(BaseView):
+    def __init__(self,text,tpl="",md_file="",out="",context={}):
+        super(CateView,self).__init__(tpl,md_file,out,context)
+        self.text = text
+        self.is_ext_url = False
+        self.cateview = self
+
     def set_url(self,url = None):
         if url:
-            self.url = self.cate + '/' + url
+            self.url = url
+            self.is_ext_url = True
         else:
-            self.url = self.cate + '/' + self.out
+            self.url = '/' + self.text + '/' + self.out
 
 class MainView(BaseView):
-    pass
+    def set_cateview(self,cateview):
+        self.cateview = cateview
 
 class HeaderView:
     def __init__(self):
@@ -143,103 +124,142 @@ class HeaderView:
     def add_cate(self,cateview):
         self.cateviews.append(cateview)
 
-    def get_cates(self):
-        return [{'url':cate.url,'text':cateview.cate} for cateview in self.cateviews]
+    def get_cates_link(self):
+        return [{'url':cateview.url,'text':cateview.text} for cateview in self.cateviews]
+
+    def update_extra_context(self,extra_context):
+        for cateview in self.cateviews:
+            cateview.update_extra_context(extra_context)
 
     def gen_html(self):
         for cateview in self.cateviews:
-            cateview.gen_html()
+            if not cateview.is_ext_url:
+                cateview.gen_html()
 
 class Site:
     def __init__(self):
-        clear_output()
         self.header = HeaderView()
         self.mainviews = []
         self.plugins = []
+
+    #def gen_index(self):
+    #    if not os.path.lexists(os.path.join('articles','index.md')):
+    #        raise Exception("[Homepage error] There should be a index.md in your article directory as homepage.")
+    #    self.indexview = MainView('index.html','index.md')
 
     def gen_cates(self):
         for cate in global_config['cates'].keys():
             #the category which md file is specified in config.json
             if ('index' in global_config['cates'][cate] and global_config['cates'][cate]['index']):
-                cate = CateView(cate,'index.html',global_config['cates'][cate]['index'],'index.html')
+                cateview = CateView(cate,'index.html',global_config['cates'][cate]['index'],'index.html')
             #the category which contains index.md 
-            elif os.path.lexists(os.path.join('articles',cate,'index.md'):
-                cate = CateView(cate,'index.html','index.md','index.html')
-            #specify the page which have no directory. Which can be single page or external link
-            elif not os.path.lexists(os.path.join('articles',cate)):
-                cate = CateView(cate)
+            elif os.path.lexists(os.path.join('articles',cate,'index.md')):
+                cateview = CateView(cate,'index.html','index.md','index.html')
             #cates which have no index.md and have some pages in the folder
-            elif os.path.isdir('articles'+os.sep + cate):
-                cate = CateView(cate,'list.html','','list.html')
-            if global_config['cates'][cate]['url']:
-                cate.set_url(global_config['cates'][cate]['url'])
             else:
-                cate.set_url()
-            self.header.add_cate(cate)
+                cateview = CateView(cate,'list.html','','list.html')
+            #external link
+            if 'url' in global_config['cates'][cate].keys():
+                cateview.set_url(global_config['cates'][cate]['url'])
+            else:
+                os.mkdir(os.path.join(global_config['output'],cate))
+                cateview.set_url()
+            self.header.add_cate(cateview)
 
     def gen_mainviews(self):
-        for cate in self.header.get_cates(text_only = 1):
-            fs = get_articles(cate['text'])
-            self.cate_list = []
-            self.handle_plugins(cate)
+        if os.path.lexists(os.path.join('articles','index.md')):
+            indexview = MainView('index.html','index.md',context=global_config['index'])
+        else:
+            indexview = MainView('index.html','index.md',context=global_config['index'])
+        self.mainviews.append(indexview)
+
+        for cateview in self.header.cateviews:
+            fs = get_articles(cateview.text)
+            self.article_list = [] #for plugins which show list of articles
             for f in fs:
                 fn,ext = os.path.splitext(f)
+                self.article_list.append({'url':'/'+cateview.text+'/'+fn+'.html','text':fn})
                 if ext == '.md' and fn != 'index':
-                    self.mainviews.append(MainView(cate['text'],'detail.html',f,'',self.plugins_context))
-                    self.cate_list.append({'url':cate['text']+'/'+fn+'.html','text':fn})
+                    mainview = MainView('detail.html',f,'',{}) 
+                    mainview.set_cateview(cateview)
+                    self.mainviews.append(mainview)
+            self.handle_plugins(cateview)
 
-    def update_plugins_context(self,plugin,plugin_cate):
+    def update_cate_plugins_context(self,plugin,plugin_cate):
         for area in plugin_cate.keys():
-            tpl = os.path.join('plugins',plugin,plugin_cate[area]['tpl'])
-            if type(plugin_cate[area]['context']) == type(str):
-                context = getattr(self,plugin_cate[area]['context'])
+            tpl = '/'.join([plugin,plugin_cate[area]['tpl']])
+            if type(plugin_cate[area]['context']) == type(""):
+                context = {plugin_cate[area]['context']:getattr(self,plugin_cate[area]['context'])}
             else:
                 context = plugin_cate[area]['context']
             self.plugins_context.update({area+'_context':render(tpl,context)})
 
-    def handle_plugins(self,cate):
+    def handle_plugins(self,cateview):
         plugins = global_config['plugins']
         self.plugins_context = {}
         for plugin in plugins:
-            plugin_config = loadjson(os.path.join('plugins',plugin,'config.json')
+            plugin_config = loadjson(os.path.join('plugins',plugin,'config.json'))
             cates = plugin_config.keys()
             if 'all_cates' in cates:
-                self.update_plugins_context(plugin,plugin_config['all_cates'])
-            if cate in cates:
-                self.update_plugins_context(plugin,plugin_config[cate])
+                self.update_cate_plugins_context(plugin,plugin_config['all_cates'])
+            if cateview.text in cates:
+                self.update_cate_plugins_context(plugin,plugin_config[cate])
+
+    def update_context(self):
+        self.header.update_extra_context({"cates_link":self.header.get_cates_link()})
+        #self.indexview.update_extra_context({"cates_link":self.header.get_cates_link()})
+        for mainview in self.mainviews:
+            mainview.update_extra_context({"cates_link":self.header.get_cates_link()})
+            
+
+    def update_plugin_context(self):
+        #self.indexview.update_extra_context(self.plugin_config)
+        self.header.update_extra_context(self.plugins_context)
+        for mainview in self.mainviews:
+            mainview.update_extra_context(self.plugins_context)
+
+    def gen_html(self):
+        #self.indexview.gen_html()
+        self.header.gen_html()
+        for mainview in self.mainviews:
+            mainview.gen_html()
 
     def gen(self):
         self.gen_cates()
         self.gen_mainviews()
+        #self.gen_index()
+        self.update_context()
+        self.update_plugin_context()
+        self.gen_html()
+
+def serve(path):
+    server = Server()
+    server.watch(global_config['articles_path'],build)
+    server.watch(os.path.join('theme',global_config['theme']),build)
+    server.watch('siteasy.py',build)
+    server.watch('config.json',build)
+    server.serve(root=global_config['output'])
+
 
 def clear_output():
-    if os.path.lexists('output'):
-        shutil.rmtree('output')
-    os.mkdir(os.getcwd()+os.sep+'output')
+    if global_config['output'].count('..') or global_config['output'] in [global_config['articles_path'],'plugins','theme']:
+        raise Exception("Invalid output path")
+    if global_config['output'] in ['','/','./']:
+        for cate in global_config['cates'].keys():
+            if os.path.lexists(cate):
+                shutil.rmtree(cate)
+    else:
+        shutil.rmtree(global_config['output'])
+        os.mkdir(os.getcwd()+os.sep+global_config['output'])
 
-
-def run():
+def build():
     clear_output()
-    gen_cates()
-    #generate pages
-    for cate in global_config['cates'].keys():
-        fs = get_articles(cate)
-        get_site_items(cate)
-        articles = []
-        for f in fs:
-            fn,ext = os.path.splitext(f)
-            if ext == '.md' and fn != 'index':
-                articles.append({'url':'/'+cate+'/'+fn+'.html','text':fn})
-                print(global_config)
-                gen_html('detail.html',get_md_content(os.path.join('articles',cate,f)),global_config,os.path.join(cate,fn+'.html'))
-        global_config.update({'articles':articles})
+    site = Site()
+    site.gen()
 
-
-    global_config.update({'side_items':[]})
-    gen_html('index.html',get_md_content(os.path.join('articles',global_config['index'])),global_config,'index.html')
-    shutil.copy('output'+os.sep+'index.html','index.html')
-    
-    serve(global_config['path_prefix'])
+def run():    
+    build()
+    serve(global_config['output'])
 
 if __name__ ==  '__main__':
     run()
