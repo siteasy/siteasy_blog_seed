@@ -10,6 +10,7 @@ from livereload import Server
 VERSION = "0.1.0"
 
 env = None
+PLUGINS_PATH = 'plugins'
 
 def loadjson(fn):
     f = open(fn)
@@ -22,7 +23,7 @@ def config():
     c = loadjson('config.json')
 
     env = Environment(
-        loader=FileSystemLoader([os.path.join(os.getcwd(),'theme',c['theme']),os.path.join(os.getcwd(),'plugins')]),
+        loader=FileSystemLoader([os.path.join(os.getcwd(),'theme',c['theme']),os.path.join(os.getcwd(),PLUGINS_PATH)]),
         autoescape=select_autoescape(['html', 'xml'])
     )
     return c
@@ -77,13 +78,26 @@ class NoneObject:
     def __init__(self):
         self.text = ""
 
+        
+
 class BaseView:
-    def __init__(self,tpl="",md_file="",out="",context={}):
+    instances = []
+    def __init__(self,text,tpl="",md_file="",out="",context={}):
+        self.text = text
         self.cateview = NoneObject()
         self.md_file = md_file
         self.tpl = tpl
         self.context = context
         self.out = out
+        self.instances.append(self)
+        self.tpl_plugins = {}
+        self.classname = self.__class__.__name__
+
+    def get_by_text(self,text):
+        for view in self.instances:
+            if view.text == text:
+                return view 
+        raise Exception("Instance %s not found"%text)
 
     def update_extra_context(self,extra_context):
         self.context.update(extra_context)
@@ -99,10 +113,14 @@ class BaseView:
             md = ""
         gen_html(self.tpl,md,self.context,os.path.join(self.cateview.text,self.out))
 
+    def apply_plugin(self,plugin):
+        print("%s apply plugin"%(self.text))
+        plugin.apply(self)
+
 class CateView(BaseView):
+    mainviews = []
     def __init__(self,text,tpl="",md_file="",out="",context={}):
-        super(CateView,self).__init__(tpl,md_file,out,context)
-        self.text = text
+        super(CateView,self).__init__(text,tpl,md_file,out,context)
         self.is_ext_url = False
         self.cateview = self
 
@@ -114,8 +132,10 @@ class CateView(BaseView):
             self.url = '/' + self.text + '/' + self.out
 
 class MainView(BaseView):
+
     def set_cateview(self,cateview):
         self.cateview = cateview
+        cateview.mainviews.append(self)
 
 class HeaderView:
     def __init__(self):
@@ -131,16 +151,26 @@ class HeaderView:
         for cateview in self.cateviews:
             cateview.update_extra_context(extra_context)
 
+    def apply_plugin_to_cates(self,plugin):
+        if 'all_cates' in plugin.config.keys():
+            for cateview in self.cateviews:
+                cateview.apply_plugin(plugin)
+        else:
+            for cate in plugin.config['cates'].keys():
+                cateview = CateView.get_by_text(cate)
+                if cateview:
+                    cateview.apply_plugin(plugin)
+
     def gen_html(self):
         for cateview in self.cateviews:
             if not cateview.is_ext_url:
                 cateview.gen_html()
 
+
 class Site:
     def __init__(self):
         self.header = HeaderView()
         self.mainviews = []
-        self.plugins = []
 
     #def gen_index(self):
     #    if not os.path.lexists(os.path.join('articles','index.md')):
@@ -168,42 +198,19 @@ class Site:
 
     def gen_mainviews(self):
         if os.path.lexists(os.path.join('articles','index.md')):
-            indexview = MainView('index.html','index.md',context=global_config['index'])
+            indexview = MainView('index','index.html','index.md',context=global_config['index'])
         else:
-            indexview = MainView('index.html','index.md',context=global_config['index'])
+            indexview = MainView('index','index.html','index.md',context=global_config['index'])
         self.mainviews.append(indexview)
 
         for cateview in self.header.cateviews:
             fs = get_articles(cateview.text)
-            self.article_list = [] #for plugins which show list of articles
             for f in fs:
                 fn,ext = os.path.splitext(f)
-                self.article_list.append({'url':'/'+cateview.text+'/'+fn+'.html','text':fn})
                 if ext == '.md' and fn != 'index':
-                    mainview = MainView('detail.html',f,'',{}) 
+                    mainview = MainView(fn,'detail.html',f,'',{}) 
                     mainview.set_cateview(cateview)
                     self.mainviews.append(mainview)
-            self.handle_plugins(cateview)
-
-    def update_cate_plugins_context(self,plugin,plugin_cate):
-        for area in plugin_cate.keys():
-            tpl = '/'.join([plugin,plugin_cate[area]['tpl']])
-            if type(plugin_cate[area]['context']) == type(""):
-                context = {plugin_cate[area]['context']:getattr(self,plugin_cate[area]['context'])}
-            else:
-                context = plugin_cate[area]['context']
-            self.plugins_context.update({area+'_context':render(tpl,context)})
-
-    def handle_plugins(self,cateview):
-        plugins = global_config['plugins']
-        self.plugins_context = {}
-        for plugin in plugins:
-            plugin_config = loadjson(os.path.join('plugins',plugin,'config.json'))
-            cates = plugin_config.keys()
-            if 'all_cates' in cates:
-                self.update_cate_plugins_context(plugin,plugin_config['all_cates'])
-            if cateview.text in cates:
-                self.update_cate_plugins_context(plugin,plugin_config[cate])
 
     def update_context(self):
         self.header.update_extra_context({"cates_link":self.header.get_cates_link()})
@@ -212,11 +219,17 @@ class Site:
             mainview.update_extra_context({"cates_link":self.header.get_cates_link()})
             
 
-    def update_plugin_context(self):
-        #self.indexview.update_extra_context(self.plugin_config)
-        self.header.update_extra_context(self.plugins_context)
-        for mainview in self.mainviews:
-            mainview.update_extra_context(self.plugins_context)
+    def apply_plugins(self):
+        for plugin_text in global_config['plugins']:
+            plugin_module = __import__(PLUGINS_PATH + '.' + plugin_text)
+            plugin = getattr(plugin_module,plugin_text).Plugin()
+            for view_text in plugin.config.keys():
+                self.header.apply_plugin_to_cates(plugin)
+                for mainview_text in plugin.config['articles'].keys():
+                    mainview = MainView.get_by_text(mainview_text)
+                    if mainview:
+                        mainview.apply_plugin(plugin)
+
 
     def gen_html(self):
         #self.indexview.gen_html()
@@ -229,12 +242,13 @@ class Site:
         self.gen_mainviews()
         #self.gen_index()
         self.update_context()
-        self.update_plugin_context()
+        self.apply_plugins()
         self.gen_html()
 
 def serve(path):
     server = Server()
     server.watch(global_config['articles_path'],build)
+    server.watch(PLUGINS_PATH,build)
     server.watch(os.path.join('theme',global_config['theme']),build)
     server.watch('siteasy.py',build)
     server.watch('config.json',build)
@@ -242,7 +256,7 @@ def serve(path):
 
 
 def clear_output():
-    if global_config['output'].count('..') or global_config['output'] in [global_config['articles_path'],'plugins','theme']:
+    if global_config['output'].count('..') or global_config['output'] in [global_config['articles_path'],PLUGINS_PATH,'theme']:
         raise Exception("Invalid output path")
     if global_config['output'] in ['','/','./']:
         for cate in global_config['cates'].keys():
