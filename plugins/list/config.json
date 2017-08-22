@@ -1,9 +1,6 @@
 {
-    "tpl":"sider.html",
-    "all_cates":{
-        "sider":{
-            "tpl":"sider.html",
-            "context":{"has_sider":true}
-        }
+    "sider":{
+        "tpl":"sider.html",
+        "context":{"has_sider":true}
     }
 }

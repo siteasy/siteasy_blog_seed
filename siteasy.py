@@ -42,7 +42,7 @@ def get_md_content(md_path):
 
 
 def gen_html(template,md,config,output):
-    print('Generate %s from %s with template=%s'%(output,md,template))
+    #print('Generate %s from %s with template=%s'%(output,md,template))
     title = md.split('\n')[0].replace('#','').strip()
     context_dict = {
         'title':title,
@@ -91,6 +91,7 @@ class BaseView:
         self.out = out
         self.instances.append(self)
         self.tpl_plugins = {}
+        self.context_plugins = {}
         self.classname = self.__class__.__name__
 
     def get_by_text(self,text):
@@ -103,7 +104,9 @@ class BaseView:
         self.context.update(extra_context)
 
     def gen_html(self):
-        print("gen_html cate=%s from md file=%s with tpl=%s and context=%s"%(self.cateview,self.md_file,self.tpl,self.context))
+        self.context.update({'tpl_plugins':self.tpl_plugins})
+        self.context.update(self.context_plugins)
+        print("gen_html cate=%s from md file=%s with tpl=%s and context=%s"%(self.cateview.text,self.md_file,self.tpl,self.context))
         if self.md_file:
             md_path = os.path.join(global_config['articles_path'],self.cateview.text,self.md_file)
             md = get_md_content(md_path)
@@ -113,16 +116,17 @@ class BaseView:
             md = ""
         gen_html(self.tpl,md,self.context,os.path.join(self.cateview.text,self.out))
 
-    def apply_plugin(self,plugin):
+    def apply_plugin(self,Plugin):
         print("%s apply plugin"%(self.text))
+        plugin = Plugin()
         plugin.apply(self)
 
 class CateView(BaseView):
-    mainviews = []
     def __init__(self,text,tpl="",md_file="",out="",context={}):
         super(CateView,self).__init__(text,tpl,md_file,out,context)
         self.is_ext_url = False
         self.cateview = self
+        self.mainviews = []
 
     def set_url(self,url = None):
         if url:
@@ -151,15 +155,14 @@ class HeaderView:
         for cateview in self.cateviews:
             cateview.update_extra_context(extra_context)
 
-    def apply_plugin_to_cates(self,plugin):
-        if 'all_cates' in plugin.config.keys():
+    def apply_plugin_to_all_cates(self,Plugin):
             for cateview in self.cateviews:
-                cateview.apply_plugin(plugin)
-        else:
-            for cate in plugin.config['cates'].keys():
-                cateview = CateView.get_by_text(cate)
-                if cateview:
-                    cateview.apply_plugin(plugin)
+                cateview.apply_plugin(Plugin)
+
+    def apply_plugin_to_cate(self,cate,Plugin):
+        cateview = CateView.get_by_text(cate)
+        if cateview:
+            cateview.apply_plugin(Plugin)
 
     def gen_html(self):
         for cateview in self.cateviews:
@@ -218,18 +221,15 @@ class Site:
         for mainview in self.mainviews:
             mainview.update_extra_context({"cates_link":self.header.get_cates_link()})
             
-
     def apply_plugins(self):
-        for plugin_text in global_config['plugins']:
-            plugin_module = __import__(PLUGINS_PATH + '.' + plugin_text)
-            plugin = getattr(plugin_module,plugin_text).Plugin()
-            for view_text in plugin.config.keys():
-                self.header.apply_plugin_to_cates(plugin)
-                for mainview_text in plugin.config['articles'].keys():
-                    mainview = MainView.get_by_text(mainview_text)
-                    if mainview:
-                        mainview.apply_plugin(plugin)
-
+        for cates in global_config['plugins']:
+            for plugin_text in global_config['plugins'][cates]:
+                plugin_module = __import__(PLUGINS_PATH + '.' + plugin_text)
+                Plugin = getattr(plugin_module,plugin_text).Plugin
+                if cates == 'all_cates':
+                    self.header.apply_plugin_to_all_cates(Plugin)
+                else:
+                    self.header.apply_plugin_to_cate(cate,Plugin)
 
     def gen_html(self):
         #self.indexview.gen_html()

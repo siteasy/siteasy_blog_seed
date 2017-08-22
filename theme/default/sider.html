@@ -1,3 +1,3 @@
-{% for plugin in plugins %}
-    {{plugin.sider_context}}
+{% for tpl in tpl_plugins.sider %}
+    {% include "%s"%tpl %}
 {% endfor %}
