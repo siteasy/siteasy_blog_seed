@@ -1,7 +1,7 @@
 {
     "articles_path":"articles",
     "theme":"default",
-    "index":{"text_0":"Siteasy","text_1":"Simplest site generator","button_0_text":"Quick start"},
+    "index":{},
     "logo":"Siteasy",
     "output":"",
     "footer":"Siteasy - Make static site generation life easy",
@@ -11,6 +11,8 @@
             "github":{"url":"https://siteasy.github.io"}
     },
     "plugins":{
-            "all_cates":["list"]
-    }
+            "all_cates":["list"],
+            "index":["Jumbotron"]
+    },
+    "plugin_t":"list"
 }

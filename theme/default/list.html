@@ -1,5 +1,10 @@
 {% extends 'base.html' %}
 {% block content %}
+    {% for plugin in plugins_context.main_before %}
+        {% with plugin_context=plugin %}
+        {% include "%s"%plugin_context.tpl %}
+        {% endwith %}
+    {% endfor %}
     <ul>
         {% for article in articles %}
             <li><a href="{{article.url}}">{{article.text}}</a></li>

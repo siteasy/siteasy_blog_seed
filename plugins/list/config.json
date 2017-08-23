@@ -1,6 +1,6 @@
 {
     "sider":{
         "tpl":"sider.html",
-        "context":{"has_sider":true}
+        "context":{}
     }
 }

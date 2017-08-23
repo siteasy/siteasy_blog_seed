@@ -1,5 +1,10 @@
 {% extends 'base.html' %}
 {% block content %}
+    {% for plugin in plugins_context.main_before %}
+        {% with plugin_context=plugin %}
+        {% include "%s"%plugin_context.tpl %}
+        {% endwith %}
+    {% endfor %}
     <div id="md_content"></div>
     <div id="md" style="display:None;">{{md_content}}</div>
 {% endblock %}

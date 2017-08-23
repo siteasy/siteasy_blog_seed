@@ -1,0 +1,6 @@
+{
+    "main_before":{
+        "tpl":"main.html",
+        "context":{"text_0":"Siteasy","text_1":"Simplest site generator","button_0_text":"Quick start"}
+    }
+}
