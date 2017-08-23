@@ -5,7 +5,7 @@
     "logo":"Siteasy",
     "output":"",
     "footer":"Siteasy - Make static site generation life easy",
-    "add_date": true,
+    "add_date": false,
     "cates":{
             "News": {}, "Docs":{}, "Themes":{}, "Community":{}, 
             "github":{"url":"https://siteasy.github.io"}
@@ -13,6 +13,5 @@
     "plugins":{
             "all_cates":["list"],
             "index":["Jumbotron"]
-    },
-    "plugin_t":"list"
+    }
 }

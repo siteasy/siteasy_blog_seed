@@ -36,13 +36,13 @@ LOGGING = {
         },
     },
     'root': {
-        'handlers': ['file'],
-        'level' : 'INFO',
+        'handlers': ['console','file'],
+        'level' : 'DEBUG',
     },
 }
 
 logging.config.dictConfig(LOGGING)
-logger = logging.getLogger("mylogger")
+#logger = logging.getLogger("mylogger")
 
 def loadjson(fn):
     f = open(fn)
@@ -157,7 +157,7 @@ class BaseView:
 
     def gen_html(self):
         self.update_plugin_context()
-        logger.debug("gen_html cate=%s from md file=%s with tpl=%s and context=\n%s\n"%(self.cateview.text,self.md_file,self.tpl,json.dumps(self.context,indent=4,sort_keys=True)))
+        logging.debug("gen_html cate=%s from md file=%s with tpl=%s and context=\n%s\n"%(self.cateview.text,self.md_file,self.tpl,json.dumps(self.context,indent=4,sort_keys=True)))
         if self.md_file:
             md_path = os.path.join(global_config['articles_path'],self.cateview.text,self.md_file)
             md = get_md_content(md_path)
@@ -168,7 +168,7 @@ class BaseView:
         gen_html(self.tpl,md,self.context,os.path.join(self.cateview.text,self.out))
 
     def merge_plugin(self,plugin):
-        logger.debug("%s merge plugin %s"%(self.text,json.dumps(plugin,indent=4,sort_keys=True)))
+        logging.debug("%s merge plugin %s"%(self.text,json.dumps(plugin,indent=4,sort_keys=True)))
         k_plugins = set(self.plugins.keys())
         k_plugin = set(plugin)
         k_plugins.update(k_plugin)
@@ -177,14 +177,14 @@ class BaseView:
                 self.plugins.update({k:plugin[k]})
             elif k in plugin.keys():
                 self.plugins[k].extend(plugin[k])
-        logger.debug("%s after merge plugins %s"%(self.text,json.dumps(self.plugins,indent=4,sort_keys=True)))
+        logging.debug("%s after merge plugins %s"%(self.text,json.dumps(self.plugins,indent=4,sort_keys=True)))
         self.plugins = copy.deepcopy(self.plugins)
 
 
     def apply_plugin(self,plugin):
-        logger.debug("%s before apply plugins = %s"%(self.text,self.plugins))
+        logging.debug("%s before apply plugins = %s"%(self.text,self.plugins))
         context_plugin = plugin.apply(self)
-        logger.debug("%s after apply plugins = %s"%(self.text,self.plugins))
+        logging.debug("%s after apply plugins = %s"%(self.text,self.plugins))
         for k in context_plugin:
             context_plugin[k] = [context_plugin[k]]
         self.merge_plugin(context_plugin)

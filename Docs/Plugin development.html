@@ -1,6 +1,6 @@
 <html>
     <head>
-        <title>Config.json</title>
+        <title>Plugin development</title>
         <script src="https://cdn.bootcss.com/marked/0.3.6/marked.min.js"></script>
         <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
         <link href="https://cdn.bootcss.com/bootswatch/3.3.7/flatly/bootstrap.min.css" rel="stylesheet">
@@ -49,101 +49,7 @@
                 
     
     <div id="md_content"></div>
-    <div id="md" style="display:None;"># Config.json
-There is a config file under the root directory. It is the global setting of the site.
-## articles_path
-Pointer to the folder where you put the article(md) files.  
-demo:
-```json
-{&#34;articles_path&#34;:&#34;articles&#34;}
-```
-
-## theme
-Which theme you used.  
-demo:
-```json
-{&#34;theme&#34;:&#34;default&#34;}
-```
-
-## index
-The context of index.  
-demo:
-```json
-{&#34;index&#34;:&#34;&#34;}
-```
-
-## logo
-The logo (brand) of the header.  
-demo:
-```json
-{&#34;logo&#34;:&#34;siteasy&#34;}
-```
-
-## output
-Which folder to generate the static web site. 
-demo:
-```json
-{&#34;output&#34;:&#34;&#34;}
-```
-will generate the site to the root directory.  
-
-The setting
-```json
-{&#34;output&#34;:&#34;output&#34;}
-```
-will make a folder &#34;output&#34; under root directory and generate the site to this &#34;output&#34; folder.  
-
-## footer
-The context of footer.  
-demo:
-```json
-{&#34;footer&#34;:&#34;Siteasy - Make static site generation life easy&#34;}
-```
-
-## add_date
-Whether to add crated datetime to the article. Todo.
-demo:
-```json
-{&#34;add_date&#34;: false}
-```
-
-## cates
-The configuration of headers.  
-demo:
-```json
-{
-    &#34;cates&#34;: {
-        &#34;News&#34;: {}, 
-        &#34;Docs&#34;:{}, 
-        &#34;Themes&#34;:{}, 
-        &#34;Community&#34;:{}, 
-        &#34;github&#34;:{&#34;url&#34;:&#34;https://siteasy.github.io&#34;}
-    }
-}
-```
-Description:
-- The keys is the text of the categories.
-- If the value of the category is empty, then
-  - If there is a index.md under the category of articles, the index.html which generated from index.md will be put as the homepage of the category.
-  - If there is no index.md under the category of articles, the list.html which list all articles of the category will be put as the homepage of category.
-- If the value contains the key &#34;url&#34;, that means the category is a external link.
-
-# plugins
-The plugins used for the website.
-demo:
-```json
-{
-    plugins: {
-        &#34;all_cates&#34;:[&#34;list&#34;],
-        &#34;index&#34;:[&#34;Jumbotron&#34;]
-    }
-}
-```
-description:
-- the keys describe which page is selected to apply the plugins
-- If the key is &#34;all_cates&#34;, all pages are selected to apply the plugins
-- If the key is &#34;index&#34;, only the index of the website is selected to apply the plugins
-- If the key is one of the categories, only the pages of the category are selected to apply the plugins.
+    <div id="md" style="display:None;"># Plugin development
 </div>
 
         
