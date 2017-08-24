@@ -2,16 +2,15 @@
     "articles_path":"articles",
     "theme":"default",
     "index":{},
-    "logo":"Siteasy",
+    "logo":"My blog",
     "output":"",
-    "footer":"Siteasy - Make static site generation life easy",
-    "add_date": false,
+    "footer":"Powered by siteasy",
+    "add_date": true,
     "cates":{
-            "News": {}, "Docs":{}, "Themes":{}, "Community":{}, 
-            "github":{"url":"https://siteasy.github.io"}
+            "posts": {}, 
+            "About me":{}
     },
     "plugins":{
-            "all_cates":["list"],
-            "index":["Jumbotron"]
+            "all_cates":["article_list"]
     }
 }

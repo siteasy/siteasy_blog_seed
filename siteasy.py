@@ -1,4 +1,5 @@
 import os
+import time
 import copy
 from collections import OrderedDict
 import shutil
@@ -10,10 +11,11 @@ from livereload import Server
 import logging
 import logging.config
 
+env = None
+global_config = None
 
 VERSION = "0.1.0"
 
-env = None
 PLUGINS_PATH = 'plugins'
 
 LOGGING = {
@@ -59,25 +61,47 @@ def config():
         autoescape=select_autoescape(['html', 'xml'])
     )
     return c
-global_config = config()
 
 def render(tpl,context):
     t = env.get_template(tpl) 
     return t.render(context)
 
 def get_md_content(md_path):
+    print("md_file=%s"%md_path)
     f = open(md_path)
     s = f.read()
+    p = r'\{[^}]*\}'
+    m = re.search(p,s)
+    if m:
+        head = m.group(0)
+        head_dict = json.loads(head)
+        date = head_dict['date']
+        content = s.replace(head,'')
+        if global_config['add_date']:
+            content += "\n %s"%date
+        title = head_dict['title']
+    else:
+        date = time.ctime(os.stat(md_path).st_ctime)
+        m = re.search(r'#(.+)',s)
+        if m:
+            title = re.search(r'#(.+)',s).group(1)
+        else:
+            title = ""
+        if global_config['add_date']:
+            content = s + "\n %s"%date
+        else:
+            content = s
     f.close()
-    return s
+    return content,title,date
+
 
 
 
 def gen_html(template,md,config,output):
     #print('Generate %s from %s with template=%s'%(output,md,template))
-    title = md.split('\n')[0].replace('#','').strip()
+    #title = md.split('\n')[0].replace('#','').strip()
     context_dict = {
-        'title':title,
+#        'title':title,
         'md_content':md,
     }
     context_dict.update(config)
@@ -136,10 +160,19 @@ class BaseView:
         self.plugins = {} # {"sider" [{'tpl':'','context':''}]
         self.classname = self.__class__.__name__
 
+    def __repr__(self):
+        return self.classname + ':' + self.text
+
+    @classmethod
+    def clear(cls):
+        cls.instances = []
+
     @classmethod
     def get_by_text(cls,text):
+        print("text=%s; ins_len=%d"%(text,len(cls.instances)))
         for view in cls.instances:
-            if view.text == text:
+            print ("view.text=",view.text)
+            if view.text.lower() == text.lower():
                 return view 
         raise Exception("Instance %s not found"%text)
 
@@ -160,7 +193,9 @@ class BaseView:
         logging.debug("gen_html cate=%s from md file=%s with tpl=%s and context=\n%s\n"%(self.cateview.text,self.md_file,self.tpl,json.dumps(self.context,indent=4,sort_keys=True)))
         if self.md_file:
             md_path = os.path.join(global_config['articles_path'],self.cateview.text,self.md_file)
-            md = get_md_content(md_path)
+            md,title,date = get_md_content(md_path)
+            self.date = date
+            self.context.update({'title':title})
             if not self.out:
                 self.out = os.path.splitext(self.md_file)[0] + '.html'
         else:
@@ -180,7 +215,6 @@ class BaseView:
         logging.debug("%s after merge plugins %s"%(self.text,json.dumps(self.plugins,indent=4,sort_keys=True)))
         self.plugins = copy.deepcopy(self.plugins)
 
-
     def apply_plugin(self,plugin):
         logging.debug("%s before apply plugins = %s"%(self.text,self.plugins))
         context_plugin = plugin.apply(self)
@@ -195,6 +229,14 @@ class CateView(BaseView):
         self.is_ext_url = False
         self.cateview = self
         self.mainviews = []
+        self.apply_config()
+
+    def apply_config(self):
+        cate_config = global_config['cates'][self.text]
+        if 'order' in cate_config.keys():
+            self.order = cate_config['order']
+        else:
+            self.order = []
 
     def set_url(self,url = None):
         if url:
@@ -296,6 +338,8 @@ class Site:
                 plugin = getattr(plugin_module,plugin_text).Plugin(plugin_text)
                 if cate == 'all_cates':
                     self.header.apply_plugin_to_all_cates(plugin)
+                elif cate == 'index':
+                    self.indexview.apply_plugin(plugin)
                 else:
                     self.header.apply_plugin_to_cate(cate,plugin)
 
@@ -325,19 +369,24 @@ def serve(path):
     server.serve(root=global_config['output'])
 
 
-def clear_output():
+def init():
+    global global_config
+    global_config = config()
+    MainView.clear()
     if global_config['output'].count('..') or global_config['output'] in [global_config['articles_path'],PLUGINS_PATH,'theme']:
         raise Exception("Invalid output path")
     if global_config['output'] in ['','/','./']:
         for cate in global_config['cates'].keys():
             if os.path.lexists(cate):
                 shutil.rmtree(cate)
+        if os.path.lexists('index.html'):
+            shutil.rmtree('index.html')
     else:
         shutil.rmtree(global_config['output'])
         os.mkdir(os.getcwd()+os.sep+global_config['output'])
 
 def build():
-    clear_output()
+    init()
     site = Site()
     site.gen()
 
