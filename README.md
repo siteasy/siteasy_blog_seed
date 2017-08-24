@@ -1,2 +1,1 @@
-website of siteasy. Also an demo of siteasy.
-
+demo blog with siteasy
