@@ -5,11 +5,4 @@
         {% include "%s"%plugin_context.tpl %}
         {% endwith %}
     {% endfor %}
-    <ul>
-        {% for article in articles %}
-            <li><a href="{{article.url}}">{{article.text}}</a></li>
-        {% else %}
-            There is no articles so far.
-        {% endfor %}
-    </ul>
 {% endblock %}

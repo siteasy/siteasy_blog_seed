@@ -7,10 +7,10 @@
     "footer":"Powered by siteasy",
     "add_date": true,
     "cates":{
-            "posts": {}, 
+            "Posts": {}, 
             "About me":{}
     },
     "plugins":{
-            "all_cates":["article_list"]
+            "all_cates":["cate_list"]
     }
 }

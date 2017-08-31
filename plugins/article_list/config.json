@@ -1,6 +1,6 @@
 {
-    "sider":{
-        "tpl":"sider.html",
+    "main_before":{
+        "tpl":"list.html",
         "context":{}
     }
 }

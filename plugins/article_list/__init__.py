@@ -7,7 +7,7 @@ class Plugin(BasePlugin):
                 return {}
             MainView = view.mainviews[0].__class__
             article_list = []
-            if view.order:
+            if view.order: #global config.json have articles order
                 order_articles = [a.lower() for a in view.order]
                 for arti in order_articles:
                     mainview = MainView.get_by_text(arti)
@@ -17,6 +17,7 @@ class Plugin(BasePlugin):
                         article_list.append({'url':'/'+view.text+'/'+mainview.text+'.html','text':mainview.text})
             else:
                 mainview_list = sorted(view.mainviews, key=lambda k : k.date)
-                article_list = [{'url':'/'+view.text+'/'+mainview.text+'.html','text':mainview.text} for mainview in mainviews]
-        context['sider']['context'].update({'article_list':article_list})
+                article_list = [{'url':'/'+view.text+'/'+mainview.text+'.html','text':mainview.text} for mainview in view.mainviews]
+        for area in self.areas:
+            context[area]['context'].update({'article_list':article_list})
         return context
