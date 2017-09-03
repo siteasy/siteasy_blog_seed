@@ -11,6 +11,6 @@
             "About me":{}
     },
     "plugins":{
-            "all_cates":["cate_list"]
+            "all_cates":["article_list"]
     }
 }
