@@ -120,6 +120,7 @@ class Site:
         article_list = [{'url':'/'+view.cateview.text+'/'+view.text+'.html','text':view.text,'short_md_content':view.short_md_content} for view in mainview_list]
         index_context = {'articles':article_list}
         index_context.update(global_config['index'])
+        #print(index_context)
         if os.path.lexists(os.path.join('articles','index.md')):
             self.indexview = MainView('index','index.html','index.md','index.html',context=index_context)
         else:
@@ -178,6 +179,15 @@ class Site:
         self.indexview.apply_md_file()
         self.apply_plugins()
         self.gen_html()
+        self.copy_static()
+
+    def copy_static(self):
+        theme_path = os.path.join(os.getcwd(),'theme',global_config['theme'],'static')
+        if os.path.lexists('static'):
+            shutil.rmtree('static')
+        shutil.copytree(theme_path,os.path.join(global_config['output'],'static'))
+
+
 
 
 def serve(path):
