@@ -36,24 +36,33 @@
   </div>
 </nav>        
     <div class="container" style="min-height:1200px;">
-        
                 
     
         
-        <ul class="list-group">
+            <div class="row">
+              <div class="col-xs-12 col-sm-6 col-md-8">
+        
+                <div id="md_content"></div>
+                <div id="md" style="display:None;"># My first post
+Start to use the siteasy as my blog generator
+
+ Tue Sep  5 14:17:15 2017</div>
+        
+              </div>
+              <div class="col-xs-6 col-md-4">
+                
+    
+    <ul class="list-group">
   
     <li><a href="/Posts/First post.html">First post</a></li>
   
 </ul>
-        
     
-    <div id="md_content"></div>
-    <div id="md" style="display:None;"># My first post
-Start to use the siteasy as my blog generator
 
- Sat Aug 26 16:55:03 2017</div>
-
+              </div>
+            </div>
         
+
     </div>
     <div style="margin-top:50px;">
     <div class="Container">Powered by siteasy</div>
@@ -73,7 +82,7 @@ Start to use the siteasy as my blog generator
                   //    return hljs.highlightAuto(code).value;
                   //},
                 });
-                document.getElementById('md_content').innerHTML = marked(document.getElementById('md').innerHTML);
+                document.getElementById('md_content').innerHTML = marked(document.getElementById('md').innerText);
             </script>
     </body>
 </html>

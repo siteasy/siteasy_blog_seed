@@ -1,5 +1,5 @@
 {
-    "main_before":{
+    "sider":{
         "tpl":"list.html",
         "context":{}
     }

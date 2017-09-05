@@ -36,7 +36,6 @@
   </div>
 </nav>        
     <div class="container" style="min-height:1200px;">
-        
                 
     
     <div id="md_content"></div>
@@ -44,10 +43,8 @@
 I am ...  
 Now I choose siteasy to maintain my blog life.
 
+</div>
 
- Sat Aug 26 16:55:03 2017</div>
-
-        
     </div>
     <div style="margin-top:50px;">
     <div class="Container">Powered by siteasy</div>
@@ -67,7 +64,7 @@ Now I choose siteasy to maintain my blog life.
                   //    return hljs.highlightAuto(code).value;
                   //},
                 });
-                document.getElementById('md_content').innerHTML = marked(document.getElementById('md').innerHTML);
+                document.getElementById('md_content').innerHTML = marked(document.getElementById('md').innerText);
             </script>
     </body>
 </html>

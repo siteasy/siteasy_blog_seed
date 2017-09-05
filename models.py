@@ -1,7 +1,6 @@
 from utils import get_md_content,render,loadjson
-from settings import global_config
+from settings import global_config,logging
 import os
-from settings import logging
 import json
 import copy
 
@@ -16,15 +15,15 @@ class BaseView:
         self.cateview = NoneObject()
         self.md_file = md_file
         self.tpl = tpl
-        self.context = context
+        self.context = copy.deepcopy(context)
         self.out = out
         if not not_in_instances:
             self.instances.append(self)
         self.plugins = {} # {"sider" [{'tpl':'','context':''}]
         self.classname = self.__class__.__name__
 
-    def __repr__(self):
-        return self.classname + ':' + self.text
+    #def __repr__(self):
+    #    return self.classname + ':' + self.text
 
     @classmethod
     def clear(cls):
@@ -63,8 +62,9 @@ class BaseView:
 
 
     def gen_html(self):
+        logging.debug("%s update_articles %s: %s"%(str(self),self.text,json.dumps(self.context,indent=4,sort_keys=True)))
         self.update_plugin_context()
-        logging.debug("gen_html cate=%s from md file=%s with tpl=%s and context=\n%s\n"%(self.cateview.text,self.md_file,self.tpl,json.dumps(self.context,indent=4,sort_keys=True)))
+        logging.debug("gen_html text=%s cate=%s from md file=%s with tpl=%s and context=\n%s\n"%(self.text, self.cateview.text,self.md_file,self.tpl,json.dumps(self.context,indent=4,sort_keys=True)))
         #gen_html(self.tpl,self.md_content,self.context,os.path.join(self.cateview.text,self.out))
         self.context.update({'md_content':self.md_content,'short_md_content':self.short_md_content})
         self.context.update(global_config)
@@ -102,6 +102,7 @@ class CateView(BaseView):
         self.cateview = self
         self.mainviews = []
         self.apply_config()
+        self.article_list = []
 
     def apply_config(self):
         cate_config = global_config['cates'][self.text]
@@ -116,6 +117,21 @@ class CateView(BaseView):
             self.is_ext_url = True
         else:
             self.url = '/' + self.text + '/' + self.out
+
+    def update_articles(self):
+        if self.order: #global config.json have articles order
+            order_articles = [a.lower() for a in self.order]
+            for arti in order_articles:
+                mainview = MainView.get_by_text(arti)
+                self.article_list.append({'url':'/'+self.text+'/'+mainview.text+'.html','text':mainview.text})
+            for mainview in self.mainviews:
+                if mainview.text.lower() not in order_articles:
+                    self.article_list.append({'url':'/'+self.text+'/'+mainview.text+'.html','text':mainview.text})
+        else:
+            mainview_list = sorted(self.mainviews, key=lambda k : k.date)
+            self.article_list = [{'url':'/'+self.text+'/'+mainview.text+'.html','text':mainview.text} for mainview in self.mainviews]
+        self.update_extra_context({'articles':self.article_list})
+        logging.debug("%s update_articles %s: %s"%(str(self),self.text,json.dumps(self.context,indent=4,sort_keys=True)))
 
 class MainView(BaseView):
     def set_cateview(self,cateview):

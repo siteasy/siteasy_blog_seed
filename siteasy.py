@@ -79,6 +79,10 @@ class HeaderView:
             if not cateview.is_ext_url:
                 cateview.apply_md_file()
                 
+    def update_articles(self):
+        for cateview in self.cateviews:
+            cateview.update_articles()
+
 
     def gen_html(self):
         for cateview in self.cateviews:
@@ -174,6 +178,7 @@ class Site:
         BasePlugin.all_articles = MainView.instances
         #self.gen_index()
         self.apply_md_file()
+        self.header.update_articles()
         self.gen_index()
         self.update_context()
         self.indexview.apply_md_file()
@@ -185,7 +190,8 @@ class Site:
         theme_path = os.path.join(os.getcwd(),'theme',global_config['theme'],'static')
         if os.path.lexists('static'):
             shutil.rmtree('static')
-        shutil.copytree(theme_path,os.path.join(global_config['output'],'static'))
+        if os.path.lexists(theme_path):
+            shutil.copytree(theme_path,os.path.join(global_config['output'],'static'))
 
 
 
