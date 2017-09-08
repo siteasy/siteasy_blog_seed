@@ -6,9 +6,18 @@
         {% endwith %}
     {% endfor %}
     <div class="md_content" data="{{md_content}}"></div>
-    <ul>
-        {% for article in site_map.sub %}
-            <li><a href="{{article.url}}">{{article.text}}</a></li>
-        {% endfor %}
+    <ul class="">
+      {% for item in site_map.sub %}
+        {% if item.is_cate %}
+            <li>{{item.text}}</li>
+            <ul class="">
+                {% for subitem in item.sub %}
+                    <li><a href="{{subitem.url}}">{{subitem.text}}</a></li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <li><a href="{{item.url}}">{{item.text}}</a></li>
+        {% endif %}
+      {% endfor %}
     </ul>
 {% endblock %}

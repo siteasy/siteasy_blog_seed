@@ -1,5 +1,14 @@
-<ul class="list-group">
+<ul class="">
   {% for item in plugin_context.context.article_list %}
-    <li><a href="{{item.url}}">{{item.text}}</a></li>
+    {% if item.is_cate %}
+        <li>{{item.text}}</li>
+        <ul class="">
+            {% for subitem in item.sub %}
+                <li><a href="{{subitem.url}}">{{subitem.text}}</a></li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <li><a href="{{item.url}}">{{item.text}}</a></li>
+    {% endif %}
   {% endfor %}
 </ul>
