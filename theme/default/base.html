@@ -32,7 +32,10 @@
                   //    return hljs.highlightAuto(code).value;
                   //},
                 });
-                document.getElementById('md_content').innerHTML = marked(document.getElementById('md').innerText);
+                items = document.getElementsByClassName('md_content')
+                for(i=0;i<items.length;i++){
+                    items[i].innerHTML = marked(items[i].getAttribute('data'));         
+                }
             </script>
     </body>
 </html>

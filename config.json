@@ -3,7 +3,7 @@
     "theme":"default",
     "index":{},
     "logo":"My blog",
-    "output":"",
+    "output":".",
     "footer":"Powered by siteasy",
     "add_date": true,
     "cates":{
@@ -11,6 +11,7 @@
             "About me":{}
     },
     "plugins":{
-            "all_cates":["cate_list"]
+            "all_cates":["cate_list"],
+            "index":["all_list"]
     }
 }

@@ -27,9 +27,9 @@
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
         <ul class="nav navbar-nav navbar-right">
         
-            <li><a href="/Posts/list.html">Posts</a></li>
+            <li><a href="/Posts">Posts</a></li>
         
-            <li><a href="/About me/index.html">About me</a></li>
+            <li><a href="/About me">About me</a></li>
         
         </ul>
     </div>
@@ -38,9 +38,24 @@
     <div class="container" style="min-height:1200px;">
                 
     
-    <ul>
         
-            <li><a href="/Posts/First post.html">First post</a></li>
+        <ul class="">
+  
+    <li><a href="/Posts/First post.html">First post</a></li>
+    <div class="md_content" data="# My first post
+Start to use the siteasy as my blog generator
+"></div>
+  
+    <li><a href="/Posts/Second post.html">Second post</a></li>
+    <div class="md_content" data="# My second post
+Start to use the siteasy as my blog generator
+"></div>
+  
+</ul>
+        
+    
+    <div class="md_content" data=""></div>
+    <ul>
         
     </ul>
 
@@ -63,7 +78,10 @@
                   //    return hljs.highlightAuto(code).value;
                   //},
                 });
-                document.getElementById('md_content').innerHTML = marked(document.getElementById('md').innerText);
+                items = document.getElementsByClassName('md_content')
+                for(i=0;i<items.length;i++){
+                    items[i].innerHTML = marked(items[i].getAttribute('data'));         
+                }
             </script>
     </body>
 </html>

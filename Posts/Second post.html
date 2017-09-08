@@ -1,6 +1,6 @@
 <html>
     <head>
-        <title></title>
+        <title> My second post</title>
         <script src="https://cdn.bootcss.com/marked/0.3.6/marked.min.js"></script>
         <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
         <link href="https://cdn.bootcss.com/bootswatch/3.3.7/flatly/bootstrap.min.css" rel="stylesheet">
@@ -27,9 +27,9 @@
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
         <ul class="nav navbar-nav navbar-right">
         
-            <li><a href="/Posts/list.html">Posts</a></li>
+            <li><a href="/Posts">Posts</a></li>
         
-            <li><a href="/About me/index.html">About me</a></li>
+            <li><a href="/About me">About me</a></li>
         
         </ul>
     </div>
@@ -38,11 +38,35 @@
     <div class="container" style="min-height:1200px;">
                 
     
-    <ul>
         
-            <li><a href="/Posts/First post.html">First post</a></li>
+            <div class="row">
+              <div class="col-xs-12 col-sm-6 col-md-8">
+                <div class="md_content" data="# My second post
+Start to use the siteasy as my blog generator
+
+ Fri Sep  8 13:31:38 2017"></div>
+              </div>
+              <div class="col-xs-6 col-md-4">
+                
+    
+    <ul class="list-group">
+  
+</ul>
+    
+
+    
+    <ul class="list-group">
+  
+    <li><a href="/Posts/Second post.html">Second post</a></li>
+  
+    <li><a href="/Posts/First post.html">First post</a></li>
+  
+</ul>
+    
+
+              </div>
+            </div>
         
-    </ul>
 
     </div>
     <div style="margin-top:50px;">
@@ -63,7 +87,10 @@
                   //    return hljs.highlightAuto(code).value;
                   //},
                 });
-                document.getElementById('md_content').innerHTML = marked(document.getElementById('md').innerText);
+                items = document.getElementsByClassName('md_content')
+                for(i=0;i<items.length;i++){
+                    items[i].innerHTML = marked(items[i].getAttribute('data'));         
+                }
             </script>
     </body>
 </html>

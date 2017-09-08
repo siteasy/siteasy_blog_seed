@@ -5,6 +5,10 @@
         {% include "%s"%plugin_context.tpl %}
         {% endwith %}
     {% endfor %}
-    <div id="md_content"></div>
-    <div id="md" style="display:None;">{{md_content}}</div>
+    <div class="md_content" data="{{md_content}}"></div>
+    <ul>
+        {% for article in site_map.sub %}
+            <li><a href="{{article.url}}">{{article.text}}</a></li>
+        {% endfor %}
+    </ul>
 {% endblock %}

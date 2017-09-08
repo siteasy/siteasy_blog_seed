@@ -13,6 +13,7 @@ def loadjson(fn,ordered_dict = True):
     return c
 
 def render(tpl,context):
+    #print(env.loader.list_templates())
     t = env.get_template(tpl) 
     return t.render(context)
 
@@ -45,4 +46,9 @@ def get_md_content(md_path):
             content = s
     f.close()
     return content,short_content,title,date
+
+def select_link_one_layer(site_map,id):
+    for k,v in site_map.items():
+        pass
+
 

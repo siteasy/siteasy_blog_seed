@@ -1,0 +1,6 @@
+<ul class="">
+  {% for item in plugin_context.context.article_list %}
+    <li><a href="{{item.url}}">{{item.text}}</a></li>
+    <div class="md_content" data="{{item.short_md_content}}"></div>
+  {% endfor %}
+</ul>

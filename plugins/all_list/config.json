@@ -1,0 +1,6 @@
+{
+    "main_before":{
+        "tpl":"list.html",
+        "context":{}
+    }
+}

@@ -9,14 +9,8 @@ VERSION = "0.1.0"
 PLUGINS_PATH = 'plugins'
 
 #get global_config from config.json
-f = open('config.json')
-global_config = json.loads(f.read(),object_pairs_hook=OrderedDict)
-f.close()
+CONFIG_FILE = 'config.json'
 
-env = Environment(
-        loader=FileSystemLoader([os.path.join(os.getcwd(),'theme',global_config['theme']),os.path.join(os.getcwd(),PLUGINS_PATH)]),
-        autoescape=select_autoescape(['html', 'xml'])
-    )
 
 
 LOGGING = {
@@ -45,3 +39,15 @@ LOGGING = {
 }
 
 logging.config.dictConfig(LOGGING)
+
+f = open('config.json')
+global_config = json.loads(f.read(),object_pairs_hook=OrderedDict)
+f.close()
+
+global_context = {k:global_config[k] for k in ['logo','footer']}
+global_site_map = [] 
+
+env = Environment(
+        loader=FileSystemLoader([os.path.join(os.getcwd(),'theme',global_config['theme']),os.path.join(os.getcwd(),PLUGINS_PATH)]),
+        autoescape=select_autoescape(['html', 'xml'])
+    )

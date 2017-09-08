@@ -13,7 +13,7 @@
     </div>
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
         <ul class="nav navbar-nav navbar-right">
-        {% for cate_link in cates_link %}
+        {% for cate_link in global_site_map %}
             <li><a href="{{cate_link.url}}">{{cate_link.text}}</a></li>
         {% endfor %}
         </ul>
